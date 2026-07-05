@@ -478,12 +478,12 @@ In summary, the server either provides an authoritative DELEG RRset or declares 
 If the delegation has a DELEG RRset, the authoritative server MUST put the DELEG RRset into the Authority section of the referral.
 In this case, the server MUST NOT include the NS RRset in the Authority section.
 
-Non-DELEG DNSSEC specifications for RRSIG inclusion in answers with authoritative RRsets ({!RFC4035} section 3.1.1) MUST be followed.
+Non-DELEG DNSSEC specifications for RRSIG inclusion in answers with authoritative RRsets ({{!RFC4035}} section 3.1.1) MUST be followed.
 Similarly, rules for DS RRset inclusion in referrals apply as specified by the DNSSEC protocol.
 
 #### DELEG-aware Clients with NS RRs Present but No DELEG RRs {#ns-no-deleg}
 
-If the delegation does not have a DELEG RRset, the authoritative server MUST put the NS RRset into the authority section of the referral.
+If the delegation does not have a DELEG RRset, the authoritative server MUST put the NS RRset, if available, into the authority section of the referral.
 The absence of the DELEG RRset MUST be proven as specified by the DNSSEC protocol for authoritative data.
 
 Similarly, rules for DS RRset inclusion into referrals apply as specified by the DNSSEC protocol.
@@ -527,7 +527,7 @@ Thus, queries with DE=0 and QTYPE=DELEG MUST result in a response which can be v
 
 - If there is an NS RRset, this will be a legacy referral. From the perspective of a DELEG-unaware client, the DELEG RR is effectively occluded by NS RRset.
   The DELEG-unaware resolver can then obtain a final answer which can be validated from the delegated zone in similar fashion as described in {{RFC4035}} section 3.1.4.1.
-- If there is no NS RRset but there is a DELEG RRset, this will be a normal authoritative response with the DELEG RRset, following non-DELEG specifications.
+- If there is no NS RRset but there is a DELEG RRset, this will be a normal authoritative (signed) response with the DELEG RRset, following non-DELEG specifications.
 - If there is no NS RRset and no DELEG RRset, this will be a standard negative response following non-DELEG specifications.
 
 The above rules apply to authoritative servers that are serving both a parent and a child zone when a DELEG-unaware client sends a QTYPE=DELEG query.
@@ -548,7 +548,8 @@ This has several consequences which stem from existing non-DELEG specifications:
 See examples in {{example-root}} and {{example-occluded}}.
 
 In order to protect validators from downgrade attacks (see {{downgrade-attacks}}) this draft introduces a new DNSKEY flag ADT (Authoritative Delegation Types, see {{validator-downgrade-protection}}).
-To achieve downgrade resistance, DNSSEC-signed zones which contain a DELEG RRset MUST set ADT flag to 1 in at least one of the DNSKEY records published in the zone.
+To achieve downgrade resistance, DNSSEC-signed zones which contain a DELEG RRset MUST set ADT flag to 1 in at least one of the DNSKEY records published in the zone (see {{validator-downgrade-protection}}).
+
 ## DNSSEC Signers {#signers}
 
 The DELEG record is authoritative at the delegation point and needs to be signed as such.
@@ -564,7 +565,7 @@ DELEG awareness introduces additional requirements on validators.
 
 ### Clarifications on Nonexistence Proofs
 
-This document updates Section 4.1 of {{!RFC6840}} to include "NS or DELEG" types in the type bitmap as indication of a delegation point, and generalizes applicability of ancestor delegation proof to all RR types that are authoritative at a delegation point (that is, both DS and DELEG).
+This document updates Section 4.1 of {{!RFC6840}} to include "NS or DELEG" types in the NSEC or NSEC3 type bitmap as indication of a delegation point, and generalizes applicability of ancestor delegation proof to all RR types that are authoritative at a delegation point (that is, both DS and DELEG).
 The text in that section is updated as follows:
 
 An "ancestor delegation" NSEC RR (or NSEC3 RR) is one with:
@@ -634,6 +635,8 @@ This section gives an overview of some of those considerations.
 A zone delegated exclusively using DELEG records is not resolvable by non-DELEG aware resolvers.
 In that case the zone is not required to have NS RRset in the apex of the delegated zone.
 Software to manage zone content or check the validity of zones needs to be updated to allow zones without an NS RRset at the apex.
+
+It is RECOMMENDED that for the foreseeable future both DELEG and NS records be published for delegations, as the transition to DELEG from NS records is expected to be long.
 
 ## NS Maybe Required in Practice
 
